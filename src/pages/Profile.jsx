@@ -13,6 +13,8 @@ import {
   Pencil,
   Loader2,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import api from '../services/api';
 import * as profileApi from '../services/profileApi.js';
@@ -56,6 +58,9 @@ export default function Profile() {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true);

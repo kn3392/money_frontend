@@ -134,7 +134,7 @@ export default function DailyLedger() {
     try {
       if (locking) await ledgerService.lockDay(dateKey);
       else await ledgerService.unlockDay(dateKey);
-      push(locking ? t('locked') : 'Unlocked');
+      push(locking ? t('locked') : t('unlockDay'));
       await refresh();
     } catch (e) {
       push(e.response?.data?.message || e.message, 'error');
@@ -147,14 +147,7 @@ export default function DailyLedger() {
   async function onSubmitIe(payload, txId) {
     if (txId) await txApi.updateTransaction(txId, payload);
     else await txApi.createTransaction(payload);
-    push('Saved');
-    await refresh();
-  }
-
-  async function onSubmitXfer(payload, txId) {
-    if (txId) await txApi.updateTransaction(txId, payload);
-    else await txApi.createTransaction(payload);
-    push('Saved');
+    push(t('saved'));
     await refresh();
   }
 
@@ -168,7 +161,7 @@ export default function DailyLedger() {
     if (!pendingDeleteTx) return;
     try {
       await txApi.deleteTransaction(pendingDeleteTx.id);
-      push('Removed');
+      push(t('delete') + ' · OK');
       setPendingDeleteTx(null);
       await refresh();
     } catch (e) {
@@ -198,13 +191,13 @@ export default function DailyLedger() {
   if (error && !ledger)
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
-        <ErrorState title="Ledger error" message={error}>
+        <ErrorState title={t('ledgerError')} message={error}>
           <button
             type="button"
             className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white"
             onClick={() => void loadAll()}
           >
-            Retry
+            {t('retryBtn')}
           </button>
         </ErrorState>
       </div>
@@ -215,7 +208,7 @@ export default function DailyLedger() {
       <ConfirmModal
         open={Boolean(pendingDeleteTx)}
         title={t('delete')}
-        message="Balances will reverse for this posting."
+        message={t('balancesReverse')}
         confirmLabel={t('delete')}
         destructive
         onCancel={() => setPendingDeleteTx(null)}
@@ -224,7 +217,7 @@ export default function DailyLedger() {
       <ConfirmModal
         open={undoOpen}
         title={t('undo')}
-        message="Undo the chronologically newest active entry globally (same as soft undo)."
+        message={t('undoHint')}
         confirmLabel={t('undo')}
         onCancel={() => setUndoOpen(false)}
         onConfirm={() => void confirmUndo()}
@@ -232,11 +225,7 @@ export default function DailyLedger() {
       <ConfirmModal
         open={lockModalOpen}
         title={locked ? t('unlockDay') : t('lockDay')}
-        message={
-          locked
-            ? 'Allow edits on this IST day again?'
-            : 'Lock prevents new posts, edits, deletes, and undo for this IST day.'
-        }
+        message={locked ? t('unlockHint') : t('lockHint')}
         busy={lockBusy}
         confirmLabel={t('confirm')}
         onCancel={() => !lockBusy && setLockModalOpen(false)}
@@ -385,7 +374,7 @@ export default function DailyLedger() {
             {t('lockedHint')}
             {ledger.lockedAt && (
               <span className="block text-xs text-amber-800 mt-1">
-                Locked at:{' '}
+                {t('lockedAt')}:{' '}
                 {new Date(ledger.lockedAt).toLocaleString('en-IN', {
                   timeZone: 'Asia/Kolkata',
                 })}
@@ -401,7 +390,7 @@ export default function DailyLedger() {
           animate={{ opacity: 1 }}
           className="mx-auto mt-8 max-w-6xl px-4 text-center text-sm text-slate-500"
         >
-          Quiet day · add postings when unlocked.
+          {t('quietDay')}
         </motion.p>
       )}
 
@@ -431,7 +420,7 @@ export default function DailyLedger() {
                 </p>
                 {label === t('closing') && (
                   <p className="mt-2 text-[11px] text-slate-500">
-                    Closing = Opening + Income − Expense · transfers excluded
+                    {t('closingHint')}
                   </p>
                 )}
               </motion.div>
@@ -448,8 +437,7 @@ export default function DailyLedger() {
                 }}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-4 text-sm font-medium text-emerald-800 shadow-sm hover:bg-emerald-50 sm:flex-none sm:justify-start"
               >
-                <PlusCircle className="h-5 w-5" /> {t('addTransaction')} (
-                IE)
+                <PlusCircle className="h-5 w-5" /> {t('addIE')}
               </button>
               <button
                 type="button"
@@ -604,7 +592,7 @@ export default function DailyLedger() {
       )}
       {loading && ledger && (
         <div className="fixed bottom-4 left-4 flex items-center gap-2 text-xs text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Refresh…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t('refreshing')}
         </div>
       )}
     </div>

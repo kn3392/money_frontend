@@ -10,8 +10,10 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import * as categoryService from '../services/categoryService';
+import { useLanguage } from '../context/LanguageContext.jsx';
 
 export default function Categories() {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState('all');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,10 +87,10 @@ export default function Categories() {
       const payload = { name, type, icon, color };
       if (editing) {
         await categoryService.updateCategory(editing.id, payload);
-        setNotice('Category updated.');
+        setNotice(t('categoryUpdated'));
       } else {
         await categoryService.createCategory(payload);
-        setNotice('Category created.');
+        setNotice(t('categoryCreated'));
       }
       resetForm();
       await load({ withSpinner: false });
@@ -104,7 +106,7 @@ export default function Categories() {
     setError('');
     try {
       await categoryService.deleteCategory(cat.id);
-      setNotice('Category deactivated.');
+      setNotice(t('categoryDeactivated'));
       await load({ withSpinner: false });
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Delete failed');
@@ -123,13 +125,13 @@ export default function Categories() {
             className="mb-2 inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard
+            {t('dashboard')}
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Categories
+            {t('categories')}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Income and expense buckets for your ledger.
+            {t('categoriesSubtitle')}
           </p>
         </div>
         <button
@@ -143,23 +145,27 @@ export default function Categories() {
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
         >
           <Plus className="h-4 w-4" />
-          Add category
+          {t('addCategory')}
         </button>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {['all', 'income', 'expense'].map((f) => (
+        {[
+          { key: 'all', label: t('allFilter') },
+          { key: 'income', label: t('income') },
+          { key: 'expense', label: t('expense') },
+        ].map(({ key, label }) => (
           <button
-            key={f}
+            key={key}
             type="button"
-            onClick={() => setFilter(f)}
+            onClick={() => setFilter(key)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${
-              filter === f
+              filter === key
                 ? 'bg-emerald-600 text-white'
                 : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'
             }`}
           >
-            {f}
+            {label}
           </button>
         ))}
       </div>
@@ -182,11 +188,11 @@ export default function Categories() {
           className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
           <h2 className="mb-4 text-lg font-medium text-slate-900">
-            {editing ? 'Edit category' : 'New category'}
+            {editing ? t('editCategory') : t('newCategory')}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Name
+              {t('categoryName')}
               <input
                 required
                 value={name}
@@ -195,19 +201,19 @@ export default function Categories() {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Type
+              {t('categoryType')}
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 disabled={Boolean(editing)}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-100"
               >
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
+                <option value="income">{t('income')}</option>
+                <option value="expense">{t('expense')}</option>
               </select>
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Icon key (optional)
+              {t('categoryIcon')}
               <input
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
@@ -216,7 +222,7 @@ export default function Categories() {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Color (optional)
+              {t('categoryColor')}
               <input
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
@@ -232,14 +238,14 @@ export default function Categories() {
               className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? 'Save' : 'Create'}
+              {editing ? t('save') : t('create')}
             </button>
             <button
               type="button"
               onClick={resetForm}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </form>
@@ -255,7 +261,7 @@ export default function Categories() {
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-emerald-800">
                 <Tag className="h-4 w-4" />
-                Income
+                {t('income')}
               </h2>
               <ul className="space-y-2">
                 {incomeList.map((c) => (
@@ -267,7 +273,7 @@ export default function Categories() {
                       <span className="font-medium text-slate-900">{c.name}</span>
                       {c.isDefault && (
                         <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">
-                          Default
+                          {t('default')}
                         </span>
                       )}
                     </div>
@@ -276,7 +282,7 @@ export default function Categories() {
                         type="button"
                         onClick={() => startEdit(c)}
                         className="rounded p-2 text-slate-600 hover:bg-slate-100"
-                        aria-label="Edit"
+                        aria-label={t('edit')}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -284,7 +290,7 @@ export default function Categories() {
                         type="button"
                         onClick={() => void handleDelete(c)}
                         className="rounded p-2 text-red-600 hover:bg-red-50"
-                        aria-label="Deactivate"
+                        aria-label={t('disable')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -293,7 +299,7 @@ export default function Categories() {
                 ))}
                 {incomeList.length === 0 && (
                   <li className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-                    No income categories.
+                    {t('noIncomeCategories')}
                   </li>
                 )}
               </ul>
@@ -303,7 +309,7 @@ export default function Categories() {
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-amber-800">
                 <Tag className="h-4 w-4" />
-                Expense
+                {t('expense')}
               </h2>
               <ul className="space-y-2">
                 {expenseList.map((c) => (
@@ -315,7 +321,7 @@ export default function Categories() {
                       <span className="font-medium text-slate-900">{c.name}</span>
                       {c.isDefault && (
                         <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">
-                          Default
+                          {t('default')}
                         </span>
                       )}
                     </div>
@@ -324,7 +330,7 @@ export default function Categories() {
                         type="button"
                         onClick={() => startEdit(c)}
                         className="rounded p-2 text-slate-600 hover:bg-slate-100"
-                        aria-label="Edit"
+                        aria-label={t('edit')}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -332,7 +338,7 @@ export default function Categories() {
                         type="button"
                         onClick={() => void handleDelete(c)}
                         className="rounded p-2 text-red-600 hover:bg-red-50"
-                        aria-label="Deactivate"
+                        aria-label={t('disable')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -341,7 +347,7 @@ export default function Categories() {
                 ))}
                 {expenseList.length === 0 && (
                   <li className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-                    No expense categories.
+                    {t('noExpenseCategories')}
                   </li>
                 )}
               </ul>

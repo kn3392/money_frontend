@@ -105,10 +105,10 @@ export default function Accounts() {
       };
       if (editing) {
         await accountService.updateAccount(editing.id, payload);
-        setNotice('Account updated.');
+        setNotice(t('accountUpdated'));
       } else {
         await accountService.createAccount(payload);
-        setNotice('Account created.');
+        setNotice(t('accountCreated'));
       }
       resetForm();
       await load({ withSpinner: false });
@@ -129,7 +129,7 @@ export default function Accounts() {
     setError('');
     try {
       await accountService.deleteAccount(acc.id);
-      setNotice('Account deactivated.');
+      setNotice(t('accountDeactivated'));
       await load({ withSpinner: false });
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Delete failed');
@@ -145,14 +145,13 @@ export default function Accounts() {
             className="mb-2 inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard
+            {t('dashboard')}
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            Accounts
+            {t('accounts')}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Opening balance, live balance, and movement from posted entries (transfers do not
-            count as income or expense).
+            {t('accountsSubtitle')}
           </p>
         </div>
         <button
@@ -166,7 +165,7 @@ export default function Accounts() {
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
         >
           <Plus className="h-4 w-4" />
-          Add account
+          {t('addAccount')}
         </button>
       </div>
 
@@ -221,7 +220,7 @@ export default function Accounts() {
             </div>
           </div>
           <p className="mt-4 text-sm font-medium text-slate-700">
-            Total available:{' '}
+            {t('totalAvailable')}:{' '}
             <span className="tabular-nums text-emerald-700">₹ {formatMoney(totalAvailable)}</span>
           </p>
         </section>
@@ -233,11 +232,11 @@ export default function Accounts() {
           className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
           <h2 className="mb-4 text-lg font-medium text-slate-900">
-            {editing ? 'Edit account' : 'New account'}
+            {editing ? t('editAccount') : t('newAccount')}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-slate-700">
-              Name
+              {t('accountName')}
               <input
                 required
                 value={name}
@@ -246,7 +245,7 @@ export default function Accounts() {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Type
+              {t('accountType')}
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
@@ -260,7 +259,7 @@ export default function Accounts() {
               </select>
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Opening balance
+              {t('opening')}
               <input
                 type="number"
                 step="0.01"
@@ -271,7 +270,7 @@ export default function Accounts() {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-              Description (optional)
+              {t('accountDescription')}
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -286,14 +285,14 @@ export default function Accounts() {
               className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? 'Save changes' : 'Create'}
+              {editing ? t('saveChanges') : t('create')}
             </button>
             <button
               type="button"
               onClick={resetForm}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </form>
@@ -306,9 +305,9 @@ export default function Accounts() {
       ) : summaryRows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <Wallet className="mx-auto h-10 w-10 text-slate-400" />
-          <p className="mt-4 font-medium text-slate-900">No accounts yet</p>
+          <p className="mt-4 font-medium text-slate-900">{t('noAccountsYet')}</p>
           <p className="mt-1 text-sm text-slate-600">
-            Default accounts are created when you register. Add one manually if needed.
+            {t('noAccountsHint')}
           </p>
         </div>
       ) : (
@@ -330,7 +329,7 @@ export default function Accounts() {
                     </span>
                     {a.isDefault && (
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">
-                        Default
+                        {t('default')}
                       </span>
                     )}
                     {a.currentBalance < 0 && (
@@ -403,7 +402,7 @@ export default function Accounts() {
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     <Pencil className="h-4 w-4" />
-                    Edit
+                    {t('edit')}
                   </button>
                   <button
                     type="button"
@@ -411,7 +410,7 @@ export default function Accounts() {
                     className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Disable
+                    {t('disable')}
                   </button>
                 </div>
               </div>

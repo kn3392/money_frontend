@@ -16,14 +16,20 @@ import {
   Search,
   PiggyBank,
   Landmark,
-  UsersRound,
   Bookmark,
   Bell,
   LineChart,
   ScrollText,
   AlertTriangle,
   Calculator,
+  Menu,
+  X,
+  IndianRupee,
+  User,
+  ChevronRight,
+  ArrowRightLeft,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { useAuth } from '../hooks/useAuth';
 import { getDashboardSummary } from '../services/dashboardService.js';
@@ -40,9 +46,7 @@ function formatMoney(n) {
 }
 
 function moneyClass(n) {
-  const v = Number(n ?? 0);
-  if (v < 0) return 'text-red-700';
-  return 'text-slate-900';
+  return Number(n ?? 0) < 0 ? 'text-red-600' : 'text-slate-900';
 }
 
 function recentFive(ledger) {
@@ -55,6 +59,144 @@ function recentFive(ledger) {
   return list.slice(0, 5);
 }
 
+const NAV_GROUPS = [
+  {
+    label: 'Core',
+    items: [
+      { to: null, icon: LayoutDashboard, labelKey: 'dashboard', active: true },
+      { to: '/ledger', icon: NotebookText, labelKey: 'dailyLedger' },
+      { to: '/search', icon: Search, labelKey: 'search' },
+      { to: '/accounts', icon: Wallet, labelKey: 'accounts' },
+      { to: '/categories', icon: Tag, labelKey: 'category' },
+      { to: '/persons', icon: Users, labelKey: 'person' },
+    ],
+  },
+  {
+    label: 'Finance',
+    items: [
+      { to: '/budgets', icon: Wallet, labelKey: 'budgets' },
+      { to: '/goals', icon: PiggyBank, labelKey: 'savingsGoals' },
+      { to: '/loans', icon: Landmark, labelKey: 'loans' },
+      { to: '/interest-book', icon: Calculator, labelKey: 'interestBook' },
+      { to: '/splits', icon: ArrowRightLeft, labelKey: 'splitExpenses' },
+      { to: '/recurring', icon: RefreshCw, labelKey: 'recurring' },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { to: '/tags', icon: Bookmark, labelKey: 'tags' },
+      { to: '/notifications', icon: Bell, labelKey: 'notifications' },
+      { to: '/advanced-reports', icon: LineChart, labelKey: 'advancedReports' },
+      { to: '/audit-logs', icon: ScrollText, labelKey: 'auditLogs' },
+      { to: '/export-backup', icon: FileDown, labelKey: 'export' },
+    ],
+  },
+];
+
+function Sidebar({ open, onClose, t, user, onLogout }) {
+  return (
+    <>
+      {/* Overlay */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+            onClick={onClose}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar panel */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white shadow-xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none lg:border-r lg:border-slate-200 ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Brand */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm">
+              <IndianRupee className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-base font-bold text-slate-900">SmartKhata</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                {group.label}
+              </p>
+              <ul className="space-y-0.5">
+                {group.items.map(({ to, icon: Icon, labelKey, active }) => {
+                  const cls = `flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  }`;
+                  return (
+                    <li key={labelKey}>
+                      {to ? (
+                        <Link to={to === '/ledger' ? `/ledger/${istTodayDateKey()}` : to} className={cls} onClick={onClose}>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {t(labelKey)}
+                        </Link>
+                      ) : (
+                        <span className={cls}>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          {t(labelKey)}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* User footer */}
+        <div className="border-t border-slate-100 p-3 space-y-1">
+          <Link
+            to="/profile"
+            onClick={onClose}
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+              {getUserDisplayName(user)?.charAt(0)?.toUpperCase() ?? 'U'}
+            </div>
+            <span className="min-w-0 flex-1 truncate">{getUserDisplayName(user)}</span>
+            <User className="h-4 w-4 shrink-0 text-slate-400" />
+          </Link>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {t('logout')}
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 export default function Dashboard() {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
@@ -63,6 +205,7 @@ export default function Dashboard() {
   const [ledger, setLedger] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const todayKey = istTodayDateKey();
 
@@ -70,21 +213,14 @@ export default function Dashboard() {
     let cancelled = false;
     Promise.all([getDashboardSummary(), ledgerService.getDayLedger(todayKey)])
       .then(([d, ld]) => {
-        if (!cancelled) {
-          setDash(d);
-          setLedger(ld);
-        }
+        if (!cancelled) { setDash(d); setLedger(ld); }
       })
       .catch((e) => {
         if (!cancelled)
           setError(e.response?.data?.message || e.message || 'Could not load data');
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [todayKey]);
 
   async function handleLogout() {
@@ -97,434 +233,320 @@ export default function Dashboard() {
   const summaryRows = dash?.summary ?? [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="h-6 w-6 text-emerald-600" />
-            <div>
-              <h1 className="text-lg font-semibold text-slate-900">
-                {t('dashboard')}
-              </h1>
-              <p className="text-sm text-slate-600">
-                Welcome,{' '}
-                <span className="font-medium">{getUserDisplayName(user)}</span>
-              </p>
-            </div>
-          </div>
-          <nav className="flex flex-wrap items-center gap-2">
-            <Link
-              to={`/ledger/${todayKey}`}
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <NotebookText className="h-4 w-4" />
-              {t('dailyLedger')}
-            </Link>
-            <Link
-              to="/persons"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Users className="h-4 w-4" />
-              {t('person')}
-            </Link>
-            <Link
-              to="/search"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Search className="h-4 w-4" />
-              {t('search')}
-            </Link>
-            <Link
-              to="/recurring"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <RefreshCw className="h-4 w-4" />
-              {t('recurring')}
-            </Link>
-            <Link
-              to="/export-backup"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <FileDown className="h-4 w-4" />
-              {t('export')}
-            </Link>
-            <Link
-              to="/budgets"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Wallet className="h-4 w-4" />
-              {t('budgets')}
-            </Link>
-            <Link
-              to="/goals"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <PiggyBank className="h-4 w-4" />
-              {t('savingsGoals')}
-            </Link>
-            <Link
-              to="/loans"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Landmark className="h-4 w-4" />
-              {t('loans')}
-            </Link>
+    <div className="flex min-h-screen bg-slate-50">
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        t={t}
+        user={user}
+        onLogout={handleLogout}
+      />
 
-            <Link
-              to="/interest-book"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Calculator className="h-4 w-4" />
-              Interest Book
-            </Link>
-
-            <Link
-              to="/tags"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Bookmark className="h-4 w-4" />
-              {t('tags')}
-            </Link>
-            <Link
-              to="/notifications"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Bell className="h-4 w-4" />
-              {t('notifications')}
-            </Link>
-            <Link
-              to="/advanced-reports"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <LineChart className="h-4 w-4" />
-              {t('advancedReports')}
-            </Link>
-            <Link
-              to="/audit-logs"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <ScrollText className="h-4 w-4" />
-              {t('auditLogs')}
-            </Link>
-            <Link
-              to="/accounts"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Wallet className="h-4 w-4" />
-              Accounts
-            </Link>
-            <Link
-              to="/categories"
-              className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Tag className="h-4 w-4" />
-              Categories
-            </Link>
-            <Link
-              to="/profile"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Profile
-            </Link>
+      {/* Main content */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Top bar */}
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+          <div className="flex items-center gap-3 px-4 py-3">
             <button
               type="button"
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+              onClick={() => setSidebarOpen(true)}
+              className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              aria-label="Open menu"
             >
-              <LogOut className="h-4 w-4" />
-              Log out
+              <Menu className="h-5 w-5" />
             </button>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        {error && (
-          <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {dash?.hasNegativeBalance && (
-          <div className="mb-6 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-semibold">{t('negativeBalance')}</p>
-              <p className="mt-0.5 text-amber-800/90">{t('negativeBalanceHint')}</p>
+            <div className="flex items-center gap-2 lg:hidden">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600">
+                <IndianRupee className="h-3.5 w-3.5 text-white" />
+              </div>
+              <span className="text-sm font-bold text-slate-900">SmartKhata</span>
+            </div>
+            <div className="hidden lg:block">
+              <h1 className="text-base font-semibold text-slate-900">{t('dashboard')}</h1>
+              <p className="text-xs text-slate-500">
+                {t('welcomeBack')} {getUserDisplayName(user)}
+              </p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                to={`/ledger/${todayKey}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors"
+              >
+                <NotebookText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('dailyLedger')}</span>
+              </Link>
+              <Link
+                to="/search"
+                className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 transition-colors"
+                aria-label={t('search')}
+              >
+                <Search className="h-4 w-4" />
+              </Link>
             </div>
           </div>
-        )}
+        </header>
 
-        {loading ? (
-          <div className="flex justify-center py-20 text-slate-500">
-            <Loader2 className="h-10 w-10 animate-spin" />
-          </div>
-        ) : dash ? (
-          <>
-            <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-base font-semibold text-slate-900">
-                {t('cashFlowSummary')}
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                {t('totalIncome')} / {t('totalExpense')} — {t('transfer')} excluded from
-                income &amp; expense totals.
-              </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-                  <p className="text-xs font-medium uppercase text-slate-500">
-                    {t('portfolioOpening')}
-                  </p>
-                  <p className={`mt-2 text-lg font-semibold tabular-nums ${moneyClass(cf?.openingBalanceTotal)}`}>
-                    ₹ {formatMoney(cf?.openingBalanceTotal)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-4">
-                  <p className="flex items-center gap-1 text-xs font-medium uppercase text-emerald-800">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    {t('totalIncome')}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold tabular-nums text-emerald-900">
-                    ₹ {formatMoney(cf?.totalIncome)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-red-100 bg-red-50/80 p-4">
-                  <p className="flex items-center gap-1 text-xs font-medium uppercase text-red-800">
-                    <TrendingDown className="h-3.5 w-3.5" />
-                    {t('totalExpense')}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold tabular-nums text-red-900">
-                    ₹ {formatMoney(cf?.totalExpense)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                  <p className="text-xs font-medium uppercase text-blue-900">
-                    {t('netSavings')}
-                  </p>
-                  <p className={`mt-2 text-lg font-semibold tabular-nums ${moneyClass(cf?.netSavings)}`}>
-                    ₹ {formatMoney(cf?.netSavings)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:col-span-2 lg:col-span-1">
-                  <p className="text-xs font-medium uppercase text-slate-500">
-                    {t('portfolioClosing')}
-                  </p>
-                  <p className={`mt-2 text-lg font-semibold tabular-nums ${moneyClass(cf?.closingBalanceTotal)}`}>
-                    ₹ {formatMoney(cf?.closingBalanceTotal)}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-medium text-slate-600">{t('account')}s</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">
-                    {dash.totalAccounts}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-                  <p className="text-sm font-medium text-emerald-900">
-                    Total available balance
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-800">
-                    ₹ {formatMoney(dash.totalAvailableBalance)}
-                  </p>
-                  <p className="mt-1 text-xs text-emerald-800/80">
-                    Sum of current balance on each active account (synced from entries).
-                  </p>
-                </div>
-              </div>
-            </section>
+        <main className="flex-1 overflow-auto px-4 py-6 lg:px-6">
+          {error && (
+            <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
 
-            <section className="mb-8">
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                {t('accountBalances')}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {summaryRows.map((row) => (
-                  <div
-                    key={row.id}
-                    className={`rounded-xl border bg-white p-5 shadow-sm ${
-                      row.currentBalance < 0
-                        ? 'border-red-200 ring-1 ring-red-100'
-                        : 'border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-slate-900">{row.name}</p>
-                        <p className="text-xs uppercase text-slate-500">Type: {row.type}</p>
-                      </div>
-                      <Wallet className="h-5 w-5 shrink-0 text-emerald-600 opacity-80" />
-                    </div>
-                    {row.currentBalance < 0 && (
-                      <span className="mt-2 inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-                        {t('negativeBalance')}
-                      </span>
-                    )}
-                    <dl className="mt-4 space-y-2 text-sm">
-                      <div className="flex justify-between gap-2 border-b border-slate-50 pb-2">
-                        <dt className="text-slate-600">{t('openingBalanceLabel')}</dt>
-                        <dd className="tabular-nums font-medium text-slate-800">
-                          ₹ {formatMoney(row.openingBalance)}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-2 border-b border-slate-50 pb-2">
-                        <dt className="text-slate-600">{t('currentBalanceLabel')}</dt>
-                        <dd className={`tabular-nums font-semibold ${moneyClass(row.currentBalance)}`}>
-                          ₹ {formatMoney(row.currentBalance)}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <dt>{t('totalIncome')}</dt>
-                        <dd className="tabular-nums text-emerald-700">
-                          ₹ {formatMoney(row.totalIncome)}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <dt>{t('totalExpense')}</dt>
-                        <dd className="tabular-nums text-red-600">
-                          ₹ {formatMoney(row.totalExpense)}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <dt>{t('transferIn')}</dt>
-                        <dd className="tabular-nums">₹ {formatMoney(row.totalTransferIn)}</dd>
-                      </div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <dt>{t('transferOut')}</dt>
-                        <dd className="tabular-nums">₹ {formatMoney(row.totalTransferOut)}</dd>
-                      </div>
-                      <div className="border-t border-slate-100 pt-2">
-                        <div className="flex justify-between text-xs font-medium text-slate-800">
-                          <dt>{t('netMovement')}</dt>
-                          <dd className={`tabular-nums ${moneyClass(row.netMovement)}`}>
-                            ₹ {formatMoney(row.netMovement)}
-                          </dd>
-                        </div>
-                        <p className="mt-1 text-[11px] leading-snug text-slate-500">
-                          {t('netMovementHint')}
+          {dash?.hasNegativeBalance && (
+            <div className="mb-5 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">{t('negativeBalance')}</p>
+                <p className="mt-0.5 text-amber-800/90">{t('negativeBalanceHint')}</p>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-slate-400">
+              <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+              <p className="text-sm">Loading your finances…</p>
+            </div>
+          ) : dash ? (
+            <div className="space-y-6">
+
+              {/* Today's ledger summary */}
+              {ledger && (
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t('todayLabel')} · {formatDateKey(ledger.date)}
+                      {ledger.isLocked && (
+                        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          {t('locked')}
+                        </span>
+                      )}
+                    </h2>
+                    <Link
+                      to={`/ledger/${todayKey}`}
+                      className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline"
+                    >
+                      {t('openDailyLedger')} <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { label: t('opening'), value: ledger.openingBalance, color: 'bg-slate-50 border-slate-200', textColor: '' },
+                      { label: t('income'), value: ledger.totalIncome, color: 'bg-emerald-50 border-emerald-100', textColor: 'text-emerald-800', icon: TrendingUp },
+                      { label: t('expense'), value: ledger.totalExpense, color: 'bg-red-50 border-red-100', textColor: 'text-red-800', icon: TrendingDown },
+                      { label: t('closing'), value: ledger.closingBalance, color: 'bg-white border-slate-200', textColor: '' },
+                    ].map(({ label, value, color, textColor, icon: Icon }) => (
+                      <div key={label} className={`rounded-2xl border p-4 ${color}`}>
+                        <p className={`flex items-center gap-1 text-xs font-medium uppercase tracking-wide ${textColor || 'text-slate-500'}`}>
+                          {Icon && <Icon className="h-3.5 w-3.5" />}
+                          {label}
+                        </p>
+                        <p className={`mt-2 text-xl font-bold tabular-nums ${textColor || moneyClass(value)}`}>
+                          ₹{formatMoney(value)}
                         </p>
                       </div>
-                    </dl>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
+                </section>
+              )}
 
-            {ledger && (
-              <section className="mb-8">
-                <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    Today · {formatDateKey(ledger.date)}
-                  </h2>
-                  <Link
-                    to={`/ledger/${todayKey}`}
-                    className="text-sm font-medium text-emerald-700 hover:underline"
-                  >
-                    Open daily ledger →
-                  </Link>
+              {/* Portfolio cash flow */}
+              <section>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-slate-700">{t('cashFlowSummary')}</h2>
+                  <p className="text-xs text-slate-400">{t('transferExcluded')}</p>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-medium uppercase text-slate-500">
-                      {t('opening')}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  {[
+                    { label: t('portfolioOpening'), value: cf?.openingBalanceTotal, cls: 'bg-slate-50 border-slate-200' },
+                    { label: t('totalIncome'), value: cf?.totalIncome, cls: 'bg-emerald-50 border-emerald-100', valCls: 'text-emerald-800' },
+                    { label: t('totalExpense'), value: cf?.totalExpense, cls: 'bg-red-50 border-red-100', valCls: 'text-red-800' },
+                    { label: t('netSavings'), value: cf?.netSavings, cls: 'bg-blue-50 border-blue-100', valCls: 'text-blue-800' },
+                    { label: t('portfolioClosing'), value: cf?.closingBalanceTotal, cls: 'bg-white border-slate-200' },
+                  ].map(({ label, value, cls, valCls }) => (
+                    <div key={label} className={`rounded-2xl border p-4 ${cls}`}>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 leading-tight">{label}</p>
+                      <p className={`mt-2 text-lg font-bold tabular-nums ${valCls || moneyClass(value)}`}>
+                        ₹{formatMoney(value)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Total available */}
+              <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-600 p-5 text-white shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-emerald-100">{t('totalAvailableStat')}</p>
+                    <p className="mt-1 text-3xl font-extrabold tabular-nums">
+                      ₹{formatMoney(dash.totalAvailableBalance)}
                     </p>
-                    <p className="mt-2 text-xl font-semibold tabular-nums">
-                      ₹ {formatMoney(ledger.openingBalance)}
+                    <p className="mt-1 text-xs text-emerald-200">
+                      {dash.totalAccounts} {t('accounts')}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/80 p-5 shadow-sm">
-                    <p className="flex items-center gap-1 text-xs font-medium uppercase text-emerald-800">
-                      <TrendingUp className="h-4 w-4" />
-                      {t('income')}
-                    </p>
-                    <p className="mt-2 text-xl font-semibold tabular-nums text-emerald-900">
-                      ₹ {formatMoney(ledger.totalIncome)}
-                    </p>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
+                    <Wallet className="h-7 w-7 text-white" />
                   </div>
-                  <div className="rounded-xl border border-red-100 bg-red-50/80 p-5 shadow-sm">
-                    <p className="flex items-center gap-1 text-xs font-medium uppercase text-red-800">
-                      <TrendingDown className="h-4 w-4" />
-                      {t('expense')}
-                    </p>
-                    <p className="mt-2 text-xl font-semibold tabular-nums text-red-900">
-                      ₹ {formatMoney(ledger.totalExpense)}
-                    </p>
+                </div>
+              </div>
+
+              {/* Account balances */}
+              {summaryRows.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-700">{t('accountBalances')}</h2>
+                    <Link to="/accounts" className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline">
+                      {t('accounts')} <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-medium uppercase text-slate-500">
-                      {t('closing')}
-                    </p>
-                    <p className="mt-2 text-xl font-semibold tabular-nums text-slate-900">
-                      ₹ {formatMoney(ledger.closingBalance)}
-                    </p>
-                    {ledger.isLocked && (
-                      <p className="mt-2 text-xs text-amber-700">Day is locked</p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {summaryRows.map((row) => (
+                      <div
+                        key={row.id}
+                        className={`rounded-2xl border bg-white p-4 shadow-sm ${
+                          row.currentBalance < 0 ? 'border-red-200 ring-1 ring-red-100' : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <div>
+                            <p className="font-semibold text-slate-900 leading-tight">{row.name}</p>
+                            <p className="text-xs text-slate-400 capitalize mt-0.5">{row.type}</p>
+                          </div>
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+                            <Wallet className="h-4 w-4 text-emerald-600" />
+                          </div>
+                        </div>
+                        {row.currentBalance < 0 && (
+                          <span className="mb-2 inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                            {t('negativeBalance')}
+                          </span>
+                        )}
+                        <div className="space-y-1.5 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('openingBalanceLabel')}</span>
+                            <span className="tabular-nums font-medium text-slate-700">₹{formatMoney(row.openingBalance)}</span>
+                          </div>
+                          <div className="flex justify-between border-t border-slate-50 pt-1.5">
+                            <span className="font-medium text-slate-700">{t('currentBalanceLabel')}</span>
+                            <span className={`tabular-nums font-bold ${moneyClass(row.currentBalance)}`}>
+                              ₹{formatMoney(row.currentBalance)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs text-slate-500">
+                            <span className="text-emerald-700">↑ ₹{formatMoney(row.totalIncome)}</span>
+                            <span className="text-red-600">↓ ₹{formatMoney(row.totalExpense)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Recent transactions */}
+              {ledger && (
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-slate-700">
+                      {t('recentToday')}
+                      <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        {recent.length}
+                      </span>
+                    </h2>
+                    <Link
+                      to={`/ledger/${todayKey}`}
+                      className="flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline"
+                    >
+                      {t('manageEntries')} <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                    {recent.length === 0 ? (
+                      <div className="flex flex-col items-center gap-2 py-12 text-slate-400">
+                        <NotebookText className="h-8 w-8 opacity-40" />
+                        <p className="text-sm">{t('noTodayTx')}</p>
+                        <Link
+                          to={`/ledger/${todayKey}`}
+                          className="mt-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                        >
+                          {t('addTransaction')}
+                        </Link>
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-slate-100">
+                        {recent.map((tx) => (
+                          <li key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                              tx.type === 'income'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : tx.type === 'expense'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {tx.type === 'income' ? '↑' : tx.type === 'expense' ? '↓' : '⇄'}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              {tx.type === 'transfer' ? (
+                                <p className="text-xs text-slate-500 truncate">
+                                  {tx.fromAccount?.name ?? '—'} → {tx.toAccount?.name ?? '—'}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-slate-500 truncate">
+                                  {[tx.category?.name, tx.account?.name].filter(Boolean).join(' · ')}
+                                  {tx.person?.name ? ` · ${tx.person.name}` : ''}
+                                </p>
+                              )}
+                              {tx.note && (
+                                <p className="text-sm font-medium text-slate-800 truncate">{tx.note}</p>
+                              )}
+                            </div>
+                            <span className={`shrink-0 text-sm font-bold tabular-nums ${
+                              tx.type === 'income' ? 'text-emerald-700' : tx.type === 'expense' ? 'text-red-600' : 'text-blue-700'
+                            }`}>
+                              ₹{formatMoney(tx.amount)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
+                </section>
+              )}
+
+              {/* Quick links grid */}
+              <section>
+                <h2 className="mb-3 text-sm font-semibold text-slate-700">Quick access</h2>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                  {[
+                    { to: '/budgets', icon: Wallet, labelKey: 'budgets', color: 'text-violet-600 bg-violet-50' },
+                    { to: '/goals', icon: PiggyBank, labelKey: 'savingsGoals', color: 'text-emerald-600 bg-emerald-50' },
+                    { to: '/loans', icon: Landmark, labelKey: 'loans', color: 'text-amber-600 bg-amber-50' },
+                    { to: '/interest-book', icon: Calculator, labelKey: 'interestBook', color: 'text-blue-600 bg-blue-50' },
+                    { to: '/recurring', icon: RefreshCw, labelKey: 'recurring', color: 'text-teal-600 bg-teal-50' },
+                    { to: '/advanced-reports', icon: LineChart, labelKey: 'advancedReports', color: 'text-rose-600 bg-rose-50' },
+                  ].map(({ to, icon: Icon, labelKey, color }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm hover:border-slate-300 hover:shadow transition-all"
+                    >
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-xs font-medium text-slate-700 leading-tight">{t(labelKey)}</span>
+                    </Link>
+                  ))}
                 </div>
               </section>
-            )}
 
-            {ledger && (
-              <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    Recent on today ({recent.length})
-                  </h2>
-                  <Link
-                    to={`/ledger/${todayKey}`}
-                    className="text-xs font-medium text-emerald-700 hover:underline"
-                  >
-                    Manage entries
-                  </Link>
-                </div>
-                {recent.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500">
-                    No transactions logged today yet.
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-slate-100">
-                    {recent.map((tx) => (
-                      <li key={tx.id} className="flex flex-wrap items-start gap-4 py-3 text-sm">
-                        <span className="w-24 shrink-0 font-medium capitalize text-slate-800">
-                          {tx.type}
-                        </span>
-                        <span className="min-w-[6rem] font-semibold tabular-nums text-slate-900">
-                          ₹ {formatMoney(tx.amount)}
-                        </span>
-                        <div className="min-w-0 flex-1 text-slate-600">
-                          {tx.type === 'transfer' ? (
-                            <span className="text-xs text-slate-500">
-                              {tx.fromAccount?.name ?? '—'} → {tx.toAccount?.name ?? '—'}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-slate-500">
-                              {[tx.category?.name, tx.account?.name]
-                                .filter(Boolean)
-                                .join(' · ')}
-                              {tx.person?.name ? ` · ${tx.person.name}` : ''}
-                            </span>
-                          )}
-                          {tx.note && (
-                            <p className="mt-0.5 font-medium text-slate-900">{tx.note}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            )}
-          </>
-        ) : null}
-
-        <p className="mt-10 text-center">
-          <Link to="/" className="text-sm text-slate-600 hover:text-slate-900">
-            ← Home
-          </Link>
-        </p>
-      </main>
+            </div>
+          ) : null}
+        </main>
+      </div>
     </div>
   );
 }
